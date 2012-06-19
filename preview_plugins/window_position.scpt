@@ -1,9 +1,11 @@
 on run argv
   if count of argv is greater than 1
-    set_window_position(item 1 of argv, item 3 of argv)
+    set myPosition to set_window_position(item 1 of argv, item 3 of argv)
   else
-    get_window_position(item 1 of argv) 
+    set myPosition to get_window_position(item 1 of argv) 
   end
+  tell application "MacVim" to activate
+  return myPosition
 end run
 
 
