@@ -233,19 +233,6 @@ endfunction
 " Preview Manager Window {{{
 " ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 "
-let s:_linemap_actions = [
-      \ 'expand',
-      \ 'jump',
-      \ 'refresh',
-      \ 'edit',  
-      \ 'redraw',
-      \ 'delete',
-      \ 'wipe',
-      \ 'help',
-      \ 'info',
-      \]
-
-
 function! s:NewPreviewManager()
   let l:preview_manager = {}
   let l:preview_manager["line_map"] = {}
@@ -268,21 +255,25 @@ function! s:NewPreviewManager()
     let old_h = @h
 
     let @h =  "┌────────────────────────────────────────────────────────┐\n"
-    let @h=@h."| o,c,<Space>    : Show files associated with the        |\n"
+    let @h=@h."| " . self.keys_for_action('expand') . ": Show files associated with the        |\n"
     let @h=@h."|                  the selected previews.                |\n"
-    let @h=@h."| <CR>           : Jump to buffer containing file.       |\n"
-    let @h=@h."| r,u,<F5>       : Refresh selected preview.             |\n"
+    let @h=@h."| " . self.keys_for_action('jump') . ": Jump to buffer containing file.       |\n"
+    let @h=@h."| " . self.keys_for_action('refresh') . ": Refresh selected preview.             |\n"
     let @h=@h."|                  Also - reopen an accidentally closed  |\n"
     let @h=@h."|                  preview window.                       |\n"
-    let @h=@h."| e,c,i          : Change preview property               |\n"
-    let @h=@h."| R              : Refresh the preview manager window.   |\n"
-    let @h=@h."| D              : Remove file from selected preview.    |\n"
-    let @h=@h."| X              : Close and delete selected preview.    |\n"
-    let @h=@h."| ?              : Show information about the preview.   |\n"
-    let @h=@h."| h,<F1>         : This help.                            |\n"
+    let @h=@h."| " . self.keys_for_action('edit') . ": Change preview property               |\n"
+    let @h=@h."| " . self.keys_for_action('redraw') . ": Refresh the preview manager window.   |\n"
+    let @h=@h."| " . self.keys_for_action('delete') . ": Remove file from selected preview.    |\n"
+    let @h=@h."| " . self.keys_for_action('info') . ": Close and delete selected preview.    |\n"
+    let @h=@h."| " . self.keys_for_action('wipe') . ": Show information about the preview.   |\n"
+    let @h=@h."| " . self.keys_for_action('help') . ": This help.                            |\n"
     let @h=@h."└────────────────────────────────────────────────────────┘"
     silent! put h
     let @h = old_h
+  endfunction
+
+  function! l:preview_manager.keys_for_action(action) dict
+    return s:_format_fixed_width(join(s:preview_manager_keys(a:action),","), 16)
   endfunction
 
   function! l:preview_manager.toggle_help() dict
@@ -326,16 +317,45 @@ function! s:NewPreviewManager()
   endfunction
 
   function! l:preview_manager.setup_buffer_commands() dict
-    command! -b ExpandLine :silent call b:preview_manager.line_action("expand",line("."))<CR>
-    command! -b JumpLine :silent call b:preview_manager.line_action("jump",line("."))<CR>
-    command! -b RefreshLine :silent call b:preview_manager.line_action("refresh",line("."))<CR>
-    command! -b EditLine :silent call b:preview_manager.line_action("edit",line("."))<CR>
-    command! -b DeleteLine :silent call b:preview_manager.line_action("delete",line("."))<CR>
-    command! -b WipeLine :silent call b:preview_manager.line_action("wipe",line("."))<CR>
-    command! -b InfoLine :silent call b:preview_manager.line_action("info",line("."))<CR>
+    command! -b ExpandLine :call b:preview_manager.line_action("expand",line("."))
+    command! -b JumpLine :call b:preview_manager.line_action("jump",line("."))
+    command! -b RefreshLine :call b:preview_manager.line_action("refresh",line("."))
+    command! -b EditLine :call b:preview_manager.line_action("edit",line("."))
+    command! -b DeleteLine :call b:preview_manager.line_action("delete",line("."))
+    command! -b WipeLine :call b:preview_manager.line_action("wipe",line("."))
+    command! -b InfoLine :call b:preview_manager.line_action("info",line("."))
     " Buffer wide actions 
-    command! -b RedrawBuffer :silent call b:preview_manager.redraw() 
-    command! -b DisplayHelp :silent call b:preview_manager.toggle_help()
+    command! -b RedrawBuffer :call b:preview_manager.redraw() 
+    command! -b DisplayHelp :call b:preview_manager.toggle_help()
+
+    noremap <Plug>ExpandLine ExpandLine<CR>
+    noremap <Plug>JumpLine JumpLine<CR>
+    noremap <Plug>RefreshLine RefreshLine<CR>
+    noremap <Plug>EditLine EditLine<CR>
+    noremap <Plug>DeleteLine DeleteLine<CR>
+    noremap <Plug>WipeLine WipeLine<CR>
+    noremap <Plug>InfoLine InfoLine<CR>
+
+    noremap <Plug>RedrawBuffer RedrawBuffer<CR>
+    noremap <Plug>DisplayHelp DisplayHelp<CR>
+
+    let l:actions = ['help', 'redraw']
+
+    for l:key in s:preview_manager_keys['help']
+      execute "nnoremap <buffer> " . l:key . " <Plug>DisplayHelp"
+    endfor
+
+    for l:key in s:preview_manager_keys['redraw']
+      execute "nnoreamp <buffer> " . l:key . " <Plug>RedrawBuffer"
+    endfor
+    
+    let l:actions = ['expand', 'jump', 'refresh', 'edit', 'redraw', 'delete', 'info', 'wipe']
+    for l:action in l:actions
+      let l:plug = toupper(l:action[0:1]) . l:action[1:-1] . "Line"
+      for l:key in s:preview_manager_keys[l:action]
+        execute "nnoremap <buffer> " . l:key . " <Plug>" . l:plug
+      endfor
+    endfor 
     
   endfunction
 
