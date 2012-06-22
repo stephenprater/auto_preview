@@ -254,30 +254,34 @@ function! s:NewPreviewManager()
     " added to the buffer in the render function
     let old_h = @h
 
-    let @h =  "┌────────────────────────────────────────────────────────┐\n"
-    let @h=@h."| " . self.keys_for_action('expand') . ": Show files associated with the        |\n"
-    let @h=@h."|                  the selected previews.                |\n"
-    let @h=@h."| " . self.keys_for_action('jump') . ": Jump to buffer containing file.       |\n"
+    let @h =  "┌─────────────────────────────────────────────────────────┐\n"
+    let @h=@h."| " . self.keys_for_action('expand') .  ": Show files associated with the        |\n"
+    let @h=@h."|                   the selected previews.                |\n"
+    let @h=@h."| " . self.keys_for_action('jump') .    ": Jump to buffer containing file.       |\n"
     let @h=@h."| " . self.keys_for_action('refresh') . ": Refresh selected preview.             |\n"
-    let @h=@h."|                  Also - reopen an accidentally closed  |\n"
-    let @h=@h."|                  preview window.                       |\n"
-    let @h=@h."| " . self.keys_for_action('edit') . ": Change preview property               |\n"
-    let @h=@h."| " . self.keys_for_action('redraw') . ": Refresh the preview manager window.   |\n"
-    let @h=@h."| " . self.keys_for_action('delete') . ": Remove file from selected preview.    |\n"
-    let @h=@h."| " . self.keys_for_action('info') . ": Close and delete selected preview.    |\n"
-    let @h=@h."| " . self.keys_for_action('wipe') . ": Show information about the preview.   |\n"
-    let @h=@h."| " . self.keys_for_action('help') . ": This help.                            |\n"
-    let @h=@h."└────────────────────────────────────────────────────────┘"
+    let @h=@h."|                   Also - reopen an accidentally closed  |\n"
+    let @h=@h."|                   preview window.                       |\n"
+    let @h=@h."| " . self.keys_for_action('edit') .    ": Change preview property               |\n"
+    let @h=@h."| " . self.keys_for_action('redraw') .  ": Refresh the preview manager window.   |\n"
+    let @h=@h."| " . self.keys_for_action('delete') .  ": Remove file from selected preview.    |\n"
+    let @h=@h."| " . self.keys_for_action('info') .    ": Close and delete selected preview.    |\n"
+    let @h=@h."| " . self.keys_for_action('wipe') .    ": Show information about the preview.   |\n"
+    let @h=@h."| " . self.keys_for_action('help') .     ": This help.                            |\n"
+    let @h=@h."└─────────────────────────────────────────────────────────┘"
     silent! put h
     let @h = old_h
   endfunction
 
   function! l:preview_manager.keys_for_action(action) dict
-    return s:_format_fixed_width(join(s:preview_manager_keys(a:action),","), 16)
+    return s:_format_fixed_width(join(s:preview_manager_keys[a:action],","), 16)
   endfunction
 
   function! l:preview_manager.toggle_help() dict
     let self.show_help = self.show_help ? 0 : 1
+  endfunction
+
+  function! l:preview_manager.redraw() dict
+    call self.activate_viewport()
   endfunction
 
   function! l:preview_manager.activate_viewport() dict
@@ -317,43 +321,43 @@ function! s:NewPreviewManager()
   endfunction
 
   function! l:preview_manager.setup_buffer_commands() dict
-    command! -b ExpandLine :call b:preview_manager.line_action("expand",line("."))
-    command! -b JumpLine :call b:preview_manager.line_action("jump",line("."))
-    command! -b RefreshLine :call b:preview_manager.line_action("refresh",line("."))
-    command! -b EditLine :call b:preview_manager.line_action("edit",line("."))
-    command! -b DeleteLine :call b:preview_manager.line_action("delete",line("."))
-    command! -b WipeLine :call b:preview_manager.line_action("wipe",line("."))
-    command! -b InfoLine :call b:preview_manager.line_action("info",line("."))
+    command! -b ExpandLine call b:preview_manager.line_action("expand",line("."))
+    command! -b JumpLine call b:preview_manager.line_action("jump",line("."))
+    command! -b RefreshLine call b:preview_manager.line_action("refresh",line("."))
+    command! -b EditLine call b:preview_manager.line_action("edit",line("."))
+    command! -b DeleteLine call b:preview_manager.line_action("delete",line("."))
+    command! -b WipeLine call b:preview_manager.line_action("wipe",line("."))
+    command! -b InfoLine call b:preview_manager.line_action("info",line("."))
     " Buffer wide actions 
-    command! -b RedrawBuffer :call b:preview_manager.redraw() 
-    command! -b DisplayHelp :call b:preview_manager.toggle_help()
+    command! -b RedrawBuffer call b:preview_manager.redraw() 
+    command! -b DisplayHelp call b:preview_manager.toggle_help() | RedrawBuffer
 
-    noremap <Plug>ExpandLine ExpandLine<CR>
-    noremap <Plug>JumpLine JumpLine<CR>
-    noremap <Plug>RefreshLine RefreshLine<CR>
-    noremap <Plug>EditLine EditLine<CR>
-    noremap <Plug>DeleteLine DeleteLine<CR>
-    noremap <Plug>WipeLine WipeLine<CR>
-    noremap <Plug>InfoLine InfoLine<CR>
+    noremap <Plug>ExpandLine :ExpandLine<CR>
+    noremap <Plug>JumpLine :JumpLine<CR>
+    noremap <Plug>RefreshLine :RefreshLine<CR>
+    noremap <Plug>EditLine :EditLine<CR>
+    noremap <Plug>DeleteLine :DeleteLine<CR>
+    noremap <Plug>WipeLine :WipeLine<CR>
+    noremap <Plug>InfoLine :InfoLine<CR>
 
-    noremap <Plug>RedrawBuffer RedrawBuffer<CR>
-    noremap <Plug>DisplayHelp DisplayHelp<CR>
+    noremap <Plug>RedrawBuffer :<SID>RedrawBuffer<CR>
+    noremap <Plug>DisplayHelp :<SID>DisplayHelp<CR>
 
     let l:actions = ['help', 'redraw']
 
     for l:key in s:preview_manager_keys['help']
-      execute "nnoremap <buffer> " . l:key . " <Plug>DisplayHelp"
+      execute "map <buffer> " . l:key . " <Plug>DisplayHelp"
     endfor
 
     for l:key in s:preview_manager_keys['redraw']
-      execute "nnoreamp <buffer> " . l:key . " <Plug>RedrawBuffer"
+      execute "map <buffer> " . l:key . " <Plug>RedrawBuffer"
     endfor
     
     let l:actions = ['expand', 'jump', 'refresh', 'edit', 'redraw', 'delete', 'info', 'wipe']
     for l:action in l:actions
-      let l:plug = toupper(l:action[0:1]) . l:action[1:-1] . "Line"
+      let l:plug = toupper(l:action[0]) . l:action[1:-1] . "Line"
       for l:key in s:preview_manager_keys[l:action]
-        execute "nnoremap <buffer> " . l:key . " <Plug>" . l:plug
+        execute "map <buffer> " . l:key . " <Plug>" . l:plug
       endfor
     endfor 
     
@@ -388,6 +392,7 @@ function! s:NewPreviewManager()
   function! l:preview_manager.line_action(action, line_no) dict
     if !has_key(self.line_map,string(a:line_no))
       " there's no warning or anything the mapping just doesn't work
+      call s:_preview_messenger.send_info("Not a valid key for that line")
       return
     endif
     
@@ -452,20 +457,64 @@ function! s:NewPreviewManager()
     return l:map_line
   endfunction
 
+  function! l:preview_manager.current_line()
+    if !has_key(self, "lines")
+      return 0
+    else
+      return len(self.lines) + 1
+    endif
+  endfunction
+
+  function! l:preview_manager.actions_for_previous_lines(length, preview, actions)
+    let l:current_line = self.current_line()
+    if l:current_line - a:length <= 0 
+      throw "Whoops - that would associate lines with the wrong actions"
+    endif
+
+    let l:line_offset = (l:current_line - (a:length + 1)) - 1) 
+
+    for l:key in keys(a:action)
+      if type(a:action[l:key]) == 3 "list?
+        let l:actions = a:action[l:key]
+      else
+        let l:actions = [a:action[l:key]]
+      endif
+
+      if l:key == "*"
+        let l:op_lines = range((l:current_line - a:length + 1) - 1, l:current_line)
+      else
+        let l:op_line = str2nr(l:key) + l:line_offset
+      endif
+      
+      for l:op_line in         for l:action in l:actions
+          let l:action_info = matchlist('edit','\(\w\{1,\}\)\(,\s\?\(\w\{1,\}\)\)\?$')
+          let l:action = l:action_info[1]
+          let l:subject = l:action_info[3]
+          call self.add_action_to_line(l:op_line, a:preview, l:action, l:subject 
+      endfor
+ 
+      let l:op_line = str2nr(l:key) + l:line_offset
+      call self.add_action_to_line(l:op_line,a:action[l:key])
+
+      endif
+
+    endfor
+  endfunction
+
   function! l:preview_manager.add_action_to_line(line_no,...)
-    if a:0 > 0 
+    if a:0 > 0 && !empty(a:1)
       let l:preview_name = a:1 
     endif
-    if a:0 > 1
+    if a:0 > 1 && !empty(a:2)
       let l:action = a:2
     endif
-    if a:0 > 2
+    if a:0 > 2 && !empty(a:3)
       let l:subject = a:3
     endif
 
     " if it exists for a preview, then add mapping for it
     if exists(l:preview_name)
-      let self.line_map[a:line_nol:preview_name] = {}
+      let self.line_map[a:line_no][l:preview_name] = {}
       if exists(l:action)
         if exists(l:subject)
           " if the action has a particular subject, store it
@@ -477,21 +526,21 @@ function! s:NewPreviewManager()
     endif
   endfunction
 
-  function! l:preview_manager.add_action_to_lines(line_nos,...)
-    for l:line_no in a:line_nos 
-      call self.add_action_to_line(l:line_no,a:000)
-    endfor
-  endfunction
-
   function! l:preview_manager.show_info(preview)
     let l:preview = a:preview
     if l:preview.info
-                 call self.line_out("  ┌──────────────────────────────────────────────┐",l:preview)
-                 call self.line_out("  | Preview Id  :  " . s:_format_fixed_width(l:preview.pid,30) . "|")
-                 call self.line_out("  | Script Type :  " . s:_format_fixed_width(l:preview.interface_name,30) . "|")
-                 call self.line_out("  | Delay       :  " . s:_format_fixed_width(l:preview.delay,30). "|")
-                 call self.line_out("  | Event       :  " . s:_format_fixed_width(l:preview.event,30). "|")
-                 call self.line_out("  └──────────────────────────────────────────────┘",l:preview)
+       call self.line_out("  ┌──────────────────────────────────────────────┐",l:preview)                     "1
+       call self.line_out("  | Preview Id  :  " . s:_format_fixed_width(l:preview.pid,30) . "|")              "2
+       call self.line_out("  | Script Type :  " . s:_format_fixed_width(l:preview.interface_name,30) . "|")   "3
+       call self.line_out("  | Delay       :  " . s:_format_fixed_width(l:preview.delay,30). "|")             "4
+       call self.line_out("  | Event       :  " . s:_format_fixed_width(l:preview.event,30). "|")             "5
+       call self.line_out("  └──────────────────────────────────────────────┘",l:preview)                     "6
+       call self.previous_line_actions(6,l:preview.name, {
+             \ "*" : "info",
+             \ "3" : "edit, interface",
+             \ "4" : "edit, delay",
+             \ "5" : "edit, event",
+             \ })
     endif
   endfunction
 
@@ -623,11 +672,6 @@ function! s:UpdatePreviewManager()
     let l:current_buffer = bufnr("%")
     call s:_preview_manager.activate_viewport()
     execute bufwinnr(l:current_buffer) . "wincmd w"
-  endif
-endfunction
-
-function! s:ToggleFold()
-  if exists('b:preview_manager')
   endif
 endfunction
 " }}}
